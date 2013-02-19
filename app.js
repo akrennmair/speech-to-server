@@ -11,7 +11,7 @@ ws.onopen = function() {
 
 encoder.onmessage = function(e) {
 	ws.send(e.data.buf);
-	if (!recording) {
+	if (e.data.cmd == 'end') {
 		ws.close();
 	}
 };
@@ -31,7 +31,6 @@ function success(localMediaStream) {
 		if (!recording)
 			return;
 		var channelLeft = e.inputBuffer.getChannelData(0);
-		//var channelRight = e.inputBuffer.getChannelData(1);
 		encoder.postMessage({ cmd: 'encode', buf: channelLeft });
 	};
 
