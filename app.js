@@ -1,30 +1,18 @@
-var stream = null;
-var audio_context = new window.webkitAudioContext();
-var recording = false;
+var stream, recording = false, encoder, ws, input, node;
 
-var encoder = new Worker('encoder.js');
-
-var ws = new WebSocket("ws://" + window.location.host + "/ws/audio");
-ws.onopen = function() {
-	console.log('ws.onopen called');
-};
-
-encoder.onmessage = function(e) {
-	ws.send(e.data.buf);
-	if (e.data.cmd == 'end') {
-		ws.close();
-	}
-};
 
 function success(localMediaStream) {
+	recording = true;
+	$('#recording_sign').show();
+
+	console.log('success grabbing microphone');
 	stream = localMediaStream;
-	console.log('success');
 
-	var input = audio_context.createMediaStreamSource(stream);
+	var audio_context = new window.webkitAudioContext();
 
-	//input.connect(audio_context.destination);
+	input = audio_context.createMediaStreamSource(stream);
+	node = input.context.createJavaScriptNode(4096, 1, 1);
 
-	var node = input.context.createJavaScriptNode(4096, 1, 1);
 	console.log('sampleRate: ' + input.context.sampleRate);
 
 	node.onaudioprocess = function(e) {
@@ -39,22 +27,43 @@ function success(localMediaStream) {
 }
 
 function fail(code) {
-	console.log('fail: ' + code);
+	console.log('grabbing microphone failed: ' + code);
 }
 
 $(document).ready(function() {
 
 	$('#start_btn').click(function(e) {
-		console.log('start');
+		console.log('pressed start button');
 		e.preventDefault();
-		recording = true;
-		navigator.webkitGetUserMedia({ vidoe: false, audio: true }, success, fail);
+
+		encoder = new Worker('encoder.js');
+		encoder.postMessage({ cmd: 'init' });
+
+		encoder.onmessage = function(e) {
+			ws.send(e.data.buf);
+			if (e.data.cmd == 'end') {
+				ws.close();
+				ws = null;
+				encoder.terminate();
+				encoder = null;
+			}
+		};
+
+		var ws = new WebSocket("ws://" + window.location.host + "/ws/audio");
+		ws.onopen = function() {
+			navigator.webkitGetUserMedia({ vidoe: false, audio: true }, success, fail);
+		};
 	});
 
 	$('#stop_btn').click(function(e) {
+		console.log('pressed stop button');
 		e.preventDefault();
 		stream.stop();
 		recording = false;
 		encoder.postMessage({ cmd: 'finish' });
+		$('#recording_sign').hide();
+		input.disconnect();
+		node.disconnect();
+		input = node = null;
 	});
 });
