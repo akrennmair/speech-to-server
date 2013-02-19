@@ -4,6 +4,8 @@ var stream, recording = false, encoder, ws, input, node;
 function success(localMediaStream) {
 	recording = true;
 	$('#recording_sign').show();
+	$('#start_btn').attr('disabled', 'disabled');
+	$('#stop_btn').removeAttr('disabled');
 
 	console.log('success grabbing microphone');
 	stream = localMediaStream;
@@ -61,7 +63,11 @@ $(document).ready(function() {
 		stream.stop();
 		recording = false;
 		encoder.postMessage({ cmd: 'finish' });
+
 		$('#recording_sign').hide();
+		$('#start_btn').removeAttr('disabled');
+		$('#stop_btn').attr('disabled', 'disabled');
+
 		input.disconnect();
 		node.disconnect();
 		input = node = null;
