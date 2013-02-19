@@ -82318,7 +82318,8 @@ return {
 			setValue(inbuf_r + (i*4), channel_r[i], 'float');
 		}
 		var nread = Module.ccall('lame_encode_buffer_ieee_float', 'number', [ 'number', 'number', 'number', 'number', 'number', 'number' ], [ handle, inbuf_l, inbuf_r, channel_l.length, outbuf, BUFSIZE ]);
-		var retdata = new Uint8Array(new ArrayBuffer(nread));
+		var arraybuf = new ArrayBuffer(nread);
+		var retdata = new Uint8Array(arraybuf);
 		retdata.set(HEAPU8.subarray(outbuf, outbuf + nread));
 		_free(outbuf);
 		_free(inbuf_l);
@@ -82330,7 +82331,8 @@ return {
 		var BUFSIZE = 8192;
 		var outbuf = _malloc(BUFSIZE);
 		var nread = Module.ccall('lame_encode_flush', 'number', [ 'number', 'number', 'number' ], [ handle, outbuf, BUFSIZE ]);
-		var retdata = new Uint8Array(new ArrayBuffer(nread));
+		var arraybuf = new ArrayBuffer(nread);
+		var retdata = new Uint8Array(arraybuf);
 		retdata.set(HEAPU8.subarray(outbuf, outbuf + nread));
 		_free(outbuf);
 		return { size: nread, data: retdata };
