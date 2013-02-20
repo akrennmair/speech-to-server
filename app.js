@@ -39,7 +39,7 @@ $(document).ready(function() {
 		e.preventDefault();
 
 		encoder = new Worker('encoder.js');
-		encoder.postMessage({ cmd: 'init' });
+		encoder.postMessage({ cmd: 'init', config: { samplerate: 22050, bitrate: 32 } });
 
 		encoder.onmessage = function(e) {
 			ws.send(e.data.buf);

@@ -5,11 +5,14 @@ var mp3codec;
 self.onmessage = function(e) {
 	switch (e.data.cmd) {
 	case 'init':
+		if (!e.data.config) {
+			e.data.config = { };
+		}
 		mp3codec = Lame.init();
-		Lame.set_mode(mp3codec, Lame.MONO);
-		Lame.set_num_channels(mp3codec, 1);
-		Lame.set_out_samplerate(mp3codec, 22050);
-		Lame.set_bitrate(mp3codec, 32);
+		Lame.set_mode(mp3codec, e.data.config.mode || Lame.JOINT_STEREO);
+		Lame.set_num_channels(mp3codec, e.data.config.channels || 2);
+		Lame.set_out_samplerate(mp3codec, e.data.config.samplerate || 44100);
+		Lame.set_bitrate(mp3codec, e.data.config.bitrate || 128);
 		Lame.init_params(mp3codec);
 		break;
 	case 'encode':
