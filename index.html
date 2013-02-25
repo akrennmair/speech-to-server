@@ -1,21 +1,29 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" ng-app="recorder">
 	<head>
 		<meta charset="utf-8">
 		<title>Speech to Server</title>
 		<link href="//netdna.bootstrapcdn.com/twitter-bootstrap/2.3.0/css/bootstrap-combined.min.css" rel="stylesheet">
-		<script src="//ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js"></script>
+		<script src="//ajax.googleapis.com/ajax/libs/angularjs/1.0.4/angular.min.js"></script>
 		<script src="app.js"></script>
 	</head>
-	<body>
+	<body ng-controller="RecorderController">
 		<div class="container">
 			<h1 class="text-center">Record Stuff from the Browser</h1>
 			<div class="row">
-				<div class="offset4 span2 text-center"><button class="btn" id="start_btn">Start recording</button></div>
-				<div class="span2 text-center"><button class="btn" id="stop_btn" disabled="disabled">Stop recording</button></div>
+				<div class="offset4 span2 text-center">
+					<label>Sample Rate: <select ng-model="samplerate" ng-options="s for s in samplerates"></select></label>
+				</div>
+				<div class="span2">
+					<label>Bit Rate: <select ng-model="bitrate" ng-options="b for b in bitrates"></select></label>
+				</div>
 			</div>
 			<div class="row">
-				<div class="span12 text-center" id="recording_sign" style="display: none">
+				<div class="offset4 span2 text-center"><button class="btn" ng-click="startRecording()" ng-disabled="recording">Start recording</button></div>
+				<div class="span2 text-center"><button class="btn" ng-click="stopRecording()" ng-disabled="!recording">Stop recording</button></div>
+			</div>
+			<div class="row">
+				<div class="span12 text-center" ng-show="recording">
 					<span class="label label-important">Recording...</label>
 				</div>
 			</div>

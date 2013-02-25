@@ -1,75 +1,84 @@
-var stream, recording = false, encoder, ws, input, node;
+var recorderApp = angular.module('recorder', [ ]);
 
+recorderApp.controller('RecorderController', [ '$scope' , function($scope) {
+	$scope.stream = null;
+	$scope.recording = false;
+	$scope.encoder = null;
+	$scope.ws = null;
+	$scope.input = null;
+	$scope.node = null;
+	$scope.samplerate = 22050;
+	$scope.samplerates = [ 8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000 ];
+	$scope.bitrate = 64;
+	$scope.bitrates = [ 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 192, 224, 256, 320 ];
 
-function success(localMediaStream) {
-	recording = true;
-	$('#recording_sign').show();
-	$('#start_btn').attr('disabled', 'disabled');
-	$('#stop_btn').removeAttr('disabled');
-
-	console.log('success grabbing microphone');
-	stream = localMediaStream;
-
-	var audio_context = new window.webkitAudioContext();
-
-	input = audio_context.createMediaStreamSource(stream);
-	node = input.context.createJavaScriptNode(4096, 1, 1);
-
-	console.log('sampleRate: ' + input.context.sampleRate);
-
-	node.onaudioprocess = function(e) {
-		if (!recording)
+	$scope.startRecording = function(e) {
+		if ($scope.recording)
 			return;
-		var channelLeft = e.inputBuffer.getChannelData(0);
-		encoder.postMessage({ cmd: 'encode', buf: channelLeft });
-	};
+		console.log('start recording');
+		$scope.encoder = new Worker('encoder.js');
+		console.log('initializing encoder with samplerate = ' + $scope.samplerate + ' and bitrate = ' + $scope.bitrate);
+		$scope.encoder.postMessage({ cmd: 'init', config: { samplerate: $scope.samplerate, bitrate: $scope.bitrate } });
 
-	input.connect(node);
-	node.connect(audio_context.destination);
-}
-
-function fail(code) {
-	console.log('grabbing microphone failed: ' + code);
-}
-
-$(document).ready(function() {
-
-	$('#start_btn').click(function(e) {
-		console.log('pressed start button');
-		e.preventDefault();
-
-		encoder = new Worker('encoder.js');
-		encoder.postMessage({ cmd: 'init', config: { samplerate: 22050, bitrate: 32 } });
-
-		encoder.onmessage = function(e) {
-			ws.send(e.data.buf);
+		$scope.encoder.onmessage = function(e) {
+			$scope.ws.send(e.data.buf);
 			if (e.data.cmd == 'end') {
-				ws.close();
-				ws = null;
-				encoder.terminate();
-				encoder = null;
+				$scope.ws.close();
+				$scope.ws = null;
+				$scope.encoder.terminate();
+				$scope.encoder = null;
 			}
 		};
 
-		var ws = new WebSocket("ws://" + window.location.host + "/ws/audio");
-		ws.onopen = function() {
-			navigator.webkitGetUserMedia({ vidoe: false, audio: true }, success, fail);
+		$scope.ws = new WebSocket("ws://" + window.location.host + "/ws/audio");
+		$scope.ws.onopen = function() {
+			navigator.webkitGetUserMedia({ vidoe: false, audio: true }, $scope.gotUserMedia, $scope.userMediaFailed);
 		};
-	});
+	};
 
-	$('#stop_btn').click(function(e) {
-		console.log('pressed stop button');
-		e.preventDefault();
-		stream.stop();
-		recording = false;
-		encoder.postMessage({ cmd: 'finish' });
+	$scope.userMediaFailed = function(code) {
+		console.log('grabbing microphone failed: ' + code);
+	};
 
-		$('#recording_sign').hide();
-		$('#start_btn').removeAttr('disabled');
-		$('#stop_btn').attr('disabled', 'disabled');
+	$scope.gotUserMedia = function(localMediaStream) {
+		$scope.recording = true;
 
-		input.disconnect();
-		node.disconnect();
-		input = node = null;
-	});
-});
+		console.log('success grabbing microphone');
+		$scope.stream = localMediaStream;
+
+		var audio_context = new window.webkitAudioContext();
+
+		$scope.input = audio_context.createMediaStreamSource($scope.stream);
+		$scope.node = $scope.input.context.createJavaScriptNode(4096, 1, 1);
+
+		console.log('sampleRate: ' + $scope.input.context.sampleRate);
+
+		$scope.node.onaudioprocess = function(e) {
+			if (!$scope.recording)
+				return;
+			var channelLeft = e.inputBuffer.getChannelData(0);
+			$scope.encoder.postMessage({ cmd: 'encode', buf: channelLeft });
+		};
+
+		$scope.input.connect($scope.node);
+		$scope.node.connect(audio_context.destination);
+
+		$scope.$apply();
+	};
+
+	$scope.stopRecording = function() {
+		if (!$scope.recording) {
+			return;
+		}
+		console.log('stop recording');
+		$scope.stream.stop();
+		$scope.recording = false;
+		$scope.encoder.postMessage({ cmd: 'finish' });
+
+		$scope.input.disconnect();
+		$scope.node.disconnect();
+		$scope.input = $scope.node = null;
+	};
+
+}]);
+
