@@ -11,6 +11,7 @@ recorderApp.controller('RecorderController', [ '$scope' , function($scope) {
 	$scope.samplerates = [ 8000, 11025, 12000, 16000, 22050, 24000, 32000, 44100, 48000 ];
 	$scope.bitrate = 64;
 	$scope.bitrates = [ 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 192, 224, 256, 320 ];
+	$scope.recordButtonStyle = "red-btn";
 
 	$scope.startRecording = function(e) {
 		if ($scope.recording)
@@ -42,6 +43,7 @@ recorderApp.controller('RecorderController', [ '$scope' , function($scope) {
 
 	$scope.gotUserMedia = function(localMediaStream) {
 		$scope.recording = true;
+		$scope.recordButtonStyle = '';
 
 		console.log('success grabbing microphone');
 		$scope.stream = localMediaStream;
@@ -70,6 +72,7 @@ recorderApp.controller('RecorderController', [ '$scope' , function($scope) {
 		if (!$scope.recording) {
 			return;
 		}
+		$scope.recordButtonStyle = "red-btn";
 		console.log('stop recording');
 		$scope.stream.stop();
 		$scope.recording = false;
