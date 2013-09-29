@@ -13,7 +13,7 @@ recorderApp.controller('RecorderController', [ '$scope' , function($scope) {
 	$scope.bitrates = [ 8, 16, 24, 32, 40, 48, 56, 64, 80, 96, 112, 128, 144, 160, 192, 224, 256, 320 ];
 	$scope.recordButtonStyle = "red-btn";
 
-	$scope.startRecording = function(e) {
+	$scope.startRecording = function() {
 		if ($scope.recording)
 			return;
 		console.log('start recording');
