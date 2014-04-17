@@ -19,7 +19,6 @@ recorderApp.controller('RecorderController', [ '$scope' , function($scope) {
 		console.log('start recording');
 		$scope.encoder = new Worker('encoder.js');
 		console.log('initializing encoder with samplerate = ' + $scope.samplerate + ' and bitrate = ' + $scope.bitrate);
-		$scope.encoder.postMessage({ cmd: 'init', config: { samplerate: $scope.samplerate, bitrate: $scope.bitrate } });
 
 		$scope.encoder.onmessage = function(e) {
 			$scope.ws.send(e.data.buf);
@@ -50,6 +49,7 @@ recorderApp.controller('RecorderController', [ '$scope' , function($scope) {
 
 		var audio_context = new window.webkitAudioContext();
 
+		$scope.encoder.postMessage({ cmd: 'init', config: { samplerate: $scope.samplerate, bitrate: $scope.bitrate, insamplerate: audio_context.sampleRate } });
 		$scope.input = audio_context.createMediaStreamSource($scope.stream);
 		$scope.node = $scope.input.context.createJavaScriptNode(4096, 1, 1);
 
